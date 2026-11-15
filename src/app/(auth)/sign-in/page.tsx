@@ -2,15 +2,42 @@
 
 import React, { useState } from "react";
 import { Car, Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { signIn } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
+import { toast } from "@/components/ui/toast";
 
 export default function SignInPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log({ email, password });
+    const formData = new FormData(e.currentTarget);
+    const userData = Object.fromEntries(formData.entries());
+
+    const { data, error } = await signIn.email({
+      email: userData.email as string,
+      password: userData.password as string,
+      callbackURL: "/",
+    });
+
+    if (data) {
+      toast.add({
+        type: "success",
+        description: "Signed in successfully.",
+      });
+      router.push("/");
+    }
+
+    if (error) {
+      toast.add({
+        type: "error",
+        description: error.message || "Invalid email or password.",
+      });
+      console.log(error)
+    }
   };
 
   return (
@@ -36,6 +63,7 @@ export default function SignInPage() {
             <div className="relative">
               <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
+              name="email"
                 type="email"
                 required
                 value={email}
@@ -63,6 +91,7 @@ export default function SignInPage() {
               <input
                 type={showPassword ? "text" : "password"}
                 required
+                name="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"

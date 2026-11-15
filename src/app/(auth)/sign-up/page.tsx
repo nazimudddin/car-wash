@@ -13,7 +13,8 @@ import {
   Upload,
 } from "lucide-react";
 import { signUp } from "@/lib/auth-client";
-import { redirect } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
+import { toast } from "@/components/ui/toast";
 interface SignUpFormData {
   name: string;
   email: string;
@@ -22,6 +23,8 @@ interface SignUpFormData {
 }
 
 export default function SignUpPage() {
+    const router = useRouter();
+
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -37,26 +40,34 @@ export default function SignUpPage() {
     }
   };
 
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // এক লাইনেই ফর্মের সব ডেটা পেয়ে গেলেন! কোনো রি-রেন্ডার বা ঝামেলা নেই।
     const formData = new FormData(e.currentTarget);
-    const formdata = new FormData(e.currentTarget);
-    const userData = Object.fromEntries(formdata.entries());
+    const userData = Object.fromEntries(formData.entries());
+
     const { data, error } = await signUp.email({
       name: userData.name as string,
       email: userData.email as string,
       password: userData.password as string,
       image: imagePreview || undefined,
-      callbackURL: "/", // সাইনআপের পর ইউজারকে কোথায় নিয়ে যাবে তা এখানে উল্লেখ করুন
+      callbackURL: "/",
     });
-    if(data){
-        console.log("User signed up successfully:", data);
-        redirect("/"); // সাইনআপের পর হোমপেজে রিডিরেক্ট করুন
+
+    if (data) {
+      toast.add({
+        type: "success",
+        description: `${userData.name} you have signed up successfully.`,
+      });
+      router.push("/");
     }
-    if(error){
-        console.error("Error signing up:", error);
+
+    if (error) {
+      toast.add({
+        type: "error",
+        description: error.message || "Failed to sign up.",
+      });
     }
   };
 
